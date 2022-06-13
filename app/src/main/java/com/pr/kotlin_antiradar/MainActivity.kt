@@ -1,12 +1,16 @@
 package com.pr.kotlin_antiradar
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -20,6 +24,14 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import android.media.AudioManager
+import android.view.Menu
+import android.view.MenuItem
+
 
 class MainActivity : AppCompatActivity(),OnMapReadyCallback {
     //only last loocation
@@ -36,6 +48,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
 
     var lat2: Double? = 40.0
     var lon2: Double? = 60.0
+    lateinit var mediaPlayer: MediaPlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,9 +58,13 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
             .findFragmentById(R.id.googlemap) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        mediaPlayer=MediaPlayer.create(this@MainActivity, R.raw.estradar)
         lastlocation()
         buildLocationRequest()
         startLocationUpdates()
+
+
+
 
         arraylist.add(MyLocatioin(41.5073230,60.4802440))
         arraylist.add(MyLocatioin(41.5193550,60.5510650))
@@ -56,6 +73,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         arraylist.add(MyLocatioin(41.5420680,60.6054800))
         arraylist.add(MyLocatioin(41.5581680,60.5974010))
         arraylist.add(MyLocatioin(41.5780330,60.5739930))
+        arraylist.add(MyLocatioin(41.6765130,60.7389000))
 
 
     }
@@ -113,11 +131,16 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
                 p0 ?: return
 
                 for (location in p0.locations) {
-                    lat = location.latitude
-                    lon = location.longitude
-                    onMapReady(googleMap)
+
+                    GlobalScope.launch(Dispatchers.Main) {
+                        delay(500)
+                        lat = location.latitude
+                        lon = location.longitude
+                        onMapReady(googleMap)
+                    }
+
                     // Log.d("Pr", "${location.latitude} / ${location.longitude}")
-                      Toast.makeText(this@MainActivity, " ${location.latitude} / ${location.longitude}", Toast.LENGTH_SHORT).show()
+                      //Toast.makeText(this@MainActivity, " ${location.latitude} / ${location.longitude}", Toast.LENGTH_SHORT).show()
                 }
 
             }
@@ -153,20 +176,48 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         var lastlocation = LatLng(lat!!, lon!!) //Beruniy
         var markerOptions = MarkerOptions()
                     .position(lastlocation)
-                    .title("Traffic Light")
+                    .title("Я")
                 //.icon(BitmapDescriptorFactory.fromResource(R.drawable.qizil2))
         googleMap.addMarker(markerOptions)
-        //googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastlocation, 15f))
-
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastlocation, 15f))
+        GlobalScope.launch(Dispatchers.Main) {
+            delay(1000)
         for (i in 0..arraylist.size-1){
+            delay(1000)
             var lastlocation2 = readlatlang(i)
             var markerOptions2 = MarkerOptions()
                 .position(lastlocation2)
                 .title("Radar $i")
             .icon(BitmapDescriptorFactory.fromResource(R.drawable.radarformap))
             googleMap.addMarker(markerOptions2)
-        }
 
+
+
+            var location1 = Location("Я")//41.67739/60.738
+            location1.latitude = lat as Double
+            location1.longitude = lon as Double
+            var location2 = Location("Radar")
+            location2.latitude = lat2 as Double
+            location2.longitude = lon2 as Double
+            var distance = location1.distanceTo(location2)
+            Log.d("Pr7","${distance.toInt()} m")
+
+                if (distance.toInt()<100){
+                    mediaPlayer.start()
+                    Log.d("Pr7","distansiya 100 dan kichkina m")
+
+                    delay(4000)
+
+                }else{
+
+                   // mediaPlayer.stop()
+
+                }
+
+
+            //Toast.makeText(this@MainActivity, "${distance.toInt()} m", Toast.LENGTH_SHORT).show()
+        }
+    }
 
 
     }
@@ -175,5 +226,22 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         lat2=arraylist.get(i).lat
         lon2=arraylist.get(i).lon
         return LatLng(lat2!!,lon2!!)
+    }
+
+
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.mymenu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.item1 -> {
+                startActivity(Intent(this@MainActivity, MainActivity2::class.java))
+            }
+
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
