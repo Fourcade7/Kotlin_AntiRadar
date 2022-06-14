@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import android.media.AudioManager
 import android.view.Menu
 import android.view.MenuItem
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity(),OnMapReadyCallback {
@@ -49,6 +50,8 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
     var lat2: Double? = 40.0
     var lon2: Double? = 60.0
     lateinit var mediaPlayer: MediaPlayer
+
+    var camera=true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +77,16 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         arraylist.add(MyLocatioin(41.5581680,60.5974010))
         arraylist.add(MyLocatioin(41.5780330,60.5739930))
         arraylist.add(MyLocatioin(41.6765130,60.7389000))
+
+        linearlay.setOnClickListener {
+            if (camera){
+                imageview1.setImageResource(R.drawable.ic_round_map_24)
+                camera=false
+            }else{
+                imageview1.setImageResource(R.drawable.ic_round_directions_car_24)
+                camera=true
+            }
+        }
 
 
     }
@@ -179,7 +192,10 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
                     .title("Я")
                 //.icon(BitmapDescriptorFactory.fromResource(R.drawable.qizil2))
         googleMap.addMarker(markerOptions)
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastlocation, 15f))
+        if (camera){
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastlocation, 15f))
+        }
+
         GlobalScope.launch(Dispatchers.Main) {
             delay(1000)
         for (i in 0..arraylist.size-1){
